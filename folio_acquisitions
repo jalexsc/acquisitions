@@ -1,0 +1,578 @@
+import json
+import uuid
+import xlrd
+import os
+import xlwt
+import xlsxwriter
+import openpyxl
+import os.path
+import datetime
+from datetime import datetime
+import requests
+
+class purchaseOrder():
+    def __init__(self,poNumber,vendor,orderType,notas,Order_status):
+        self.poNumber=poNumber
+        self.vendor=vendor
+        self.orderType=orderType
+        self.notes=notas
+        self.workflowStatus=Order_status
+        self.tags="EBSCOTEST"
+
+
+    def printPurchaseOrderOngoing(self, Order_format, currency, renewalDate, purchase_method, eprice, id_loc, title, subscrition_from, subscription_to, package, publisher, fund, acq_method, expectedActivationDate,materialType,polId,secuence,fileName):
+        Ordarchivo=open(fileName+"_orders.json", 'a')
+        order={
+            #"assignedTo": "",
+            #"billTo": "", 
+            #"shipTo": "",
+            "manualPo": True,
+            "approved": True, #add
+            "orderType":self.orderType,
+            "ongoing": {"interval": 365,"isSubscription": True,"manualRenewal": False,"reviewPeriod": 30,"renewalDate": renewalDate},
+            "poNumber":self.poNumber,
+            "totalItems":1,
+            "vendor": self.vendor,
+            "workflowStatus": "Pending",
+            "notes": self.notes,
+            "tags":{"tagList":[self.tags]},
+            "compositePoLines": [
+                {
+                    "id": polId,
+                    "acquisitionMethod": purchase_method,
+                    "cancellationRestriction": False,
+                    "rush": False,
+                    #"selector": sele,
+                    "cost": {"listUnitPriceElectronic": eprice, "currency": currency, "quantityElectronic": 1, "poLineEstimatedPrice": eprice},
+                    "locations": [{"locationId":id_loc, "quantity":1,"quantityElectronic":1}],
+                    "eresource": {"activated": True, "activationDue": 1,"createInventory": "None", "trial": False,"expectedActivation": expectedActivationDate,"userLimit": 999, "accessProvider": self.vendor,"materialType": materialType},
+                    "receiptStatus": "Fully Received",
+                    "orderFormat" : Order_format,
+                    "details":{"productIds":[],"subscriptionFrom":subscrition_from,"subscriptionTo":subscription_to},
+                    "poLineDescription": publisher,
+                    "poLineNumber": self.poNumber+"-"+str(secuence),
+                    "isPackage": True,
+                    "physical":{"createInventory":"None","volumes":[],"materialSupplier": self.vendor},##add mt, exp receipt
+                    "source": "User",
+                    "titleOrPackage": title,
+                    "publisher": "",
+                    #"fundDistribution":funds_p,#[{"code":sierra_fund_code, "fundId": fund_id, "distributionType": "percentage","value": 100}], ##add
+                    "isPackage": True
+                 }]
+                 }
+        json_ord = json.dumps(order)
+        print('Datos en formato JSON', json_ord)
+        Ordarchivo.write(json_ord+"\n")
+        
+    def printPurchaseOrderOnTime(self, format, currency, purchase_method,fileName):
+        Ordarchivo=open(fileName+"_orders.json", 'a')
+        order={
+
+            "assignedTo": "",
+            "billTo": "", 
+            "shipTo": "",
+            "manualPo": True,
+            "approved": True, #add
+            "orderType":self.orderType,
+            "poNumber":self.poNumber,
+            "totalItems":1,
+            "vendor": self.vendor,
+            "workflowStatus": "Pending",
+            "notes": self.notes,
+            "tags":{"tagList":[self.tags]},
+            "compositePoLines": [
+                {
+                    "id": alex,
+                    "acquisitionMethod": purchase_method,
+                    "cancellationRestriction": False,
+                    "rush": False,
+                    "selector": sele,
+                    "cost": {"currency": "USD","listUnitPrice": eprice,"quantityPhysical": 1},
+                    "locations": [{"locationId":id_loc, "quantityPhysical":1}],
+                    "receiptStatus": "Awaiting Receipt",
+                    "orderFormat" : "Physical Resource",
+                    #"details":{"receivingNote": "ABCDEFGHIJKL"},
+                    "poLineDescription": publisher,
+                    "poLineNumber": polinenumber,
+                    "physical":{"createInventory":"None","volumes":[vol],"materialType": mt},##add mt, exp receipt
+                    "source": "User",
+                    "titleOrPackage": title,
+                    "fundDistribution":funds_p,#[{"code":sierra_fund_code, "fundId": fund_id, "distributionType": "percentage","value": 100}], ##add
+                    "isPackage": False
+                 }]
+                 }
+        json_ord = json.dumps(order)
+        print('Datos en formato JSON', json_ord)
+        Ordarchivo.write(json_ord+"\n")
+
+
+class contacts():
+
+    def __init__(self,contactfirstName, contactlastName, contactemails,contactcategories ):
+        self.contactid=str(uuid.uuid4())
+        self.contactfirstName= contactfirstName
+        self.contactlastName= contactlastName
+        self.language= "en-us"
+        self.contactnotes=""
+        self.contactnumerotelefono=[]
+        self.contactemails=contactemails
+        self.contactcategories=contactcategories
+        self.contactaddresses=[]
+        self.contacturls=[]
+        self.contactinactive= False
+
+
+    def printcontacts(self,fileName):
+        contactarchivo=open(fileName+"_contacts.json", 'a')
+        contacto={
+            #"prefix": "",
+            "id": self.contactid,
+            "firstName": self.contactfirstName,
+            "lastName": self.contactlastName,
+            "language": self.language,
+            "notes": self.contactnotes,
+            "phoneNumbers": self.contactnumerotelefono,
+            "emails": self.contactemails,
+            "addresses": self.contactaddresses,
+            "urls": self.contacturls,
+            "categories": self.contactcategories,
+            "inactive": self.contactinactive,
+           }
+        json_contact = json.dumps(contacto)
+        #print('Datos en formato JSON', json_str)
+        contactarchivo.write(json_contact+"\n")
+        return contacto['id']
+#end
+
+class interfaces():
+
+    def __init__(self,intername, interuri):
+        self.interid=str(uuid.uuid4())
+        self.intername = intername
+        self.interuri = interuri
+        self.deliveryMethod= "Online"
+        self.interavailable=True
+        self.intertype=["Admin"]
+        
+    def printinterfaces(self, fileName):
+        intarchivo=open(fileName+"_interfaces.json", 'a')
+        dato={
+            "id": self.interid,
+            "name": self.intername,
+            "uri": self.interuri,
+            "available":self.interavailable,
+            "deliveryMethod": self.deliveryMethod,
+            "statisticsFormat": "HTML",
+            "type": self.intertype
+           }
+        json_interfaces = json.dumps(dato)
+        #print('Datos en formato JSON', json_str)
+        intarchivo.write(json_interfaces+"\n")
+        return dato['id']
+#end
+
+def divstring(stringtodivide):
+    coded=stringtodivide.split()
+    return coded[0]
+   
+
+class Organizations():
+
+    def __init__(self,name,contactId,interfaceId):
+
+        self.id=str(uuid.uuid4())
+        self.name=name
+        self.code=divstring(name)
+        self.status="Active"
+        self.aliases=[]
+        self.addresses=[]
+        self.phoneNumbers=[]
+        self.emails=[]
+        self.urls=[]
+        self.contacts=contactId
+        self.agreements=[]
+        self.vendorCurrencies= []
+        self.interfaces= interfaceId
+        self.accounts=[]
+        self.isVendor= True
+        #self.changelogs= []
+    
+    #methods
+    def orgstatus():
+        pass
+    def vendor():
+        pass
+    def restore(self):
+        pass
+    def put(self,id):
+        pass
+    def delete(self,id):
+        pass
+    def str_json(self):
+        pass
+    def printorganizations(self,fileName):
+
+        orgarchivo=open(fileName+"_organizations.json", 'a')
+        organization= {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code,
+            "status": self.status,
+            "aliases": self.aliases,
+            "addresses": self.addresses,
+            "phoneNumbers": self.phoneNumbers,
+            "emails": self.emails,
+            "urls": self.urls,
+            "contacts": self.contacts,
+            "agreements": self.agreements,
+            "vendorCurrencies": self.vendorCurrencies,
+            "interfaces": self.interfaces,
+            "accounts": self.accounts,
+            "isVendor": self.isVendor,
+            "changelogs": [],
+            }
+        json_organization = json.dumps(organization)
+        #print('Datos en formato JSON', json_str)
+        orgarchivo.write(json_organization+"\n")
+#end    
+def interfacetype(categ):
+    catego=[]
+    if (categ.find('Admin') != -1):
+        catego.append("Admin")
+    if (categ.find('Statistics') != -1):
+        catego.append("Admin")
+    return catego
+#end
+
+def floatHourToTime(fh):
+    h, r = divmod(fh, 1)
+    m, r = divmod(r*60, 1)
+    return (
+        int(h),
+        int(m),
+        int(r*60),
+    )
+def cat(categ):
+    catego=[]    
+    if (categ.find('Renewals') != -1):
+        catego.append("00a42567-e21b-4526-945e-52f2c0ed7891")#Renewals
+    if (categ.find('Support') != -1):
+        catego.append("1e8a8146-317a-448d-8039-fd891c0ef16e")#Support
+    if (categ.find('Accounting') != -1):
+        catego.append("1cdffce2-4385-49af-babe-d22df40ec207")#Accounting
+    if(categ.find('General') != -1):
+        catego.append("9c321c44-774c-491f-9012-2024b93cb453")#General
+    if(categ.find('Sales') != -1):
+       catego.append("374dfd6f-6f84-4769-82ce-0a145abeddd3")#Sales
+    if(categ.find('Usage Data') != -1):
+       catego.append("e45c59bb-2567-47b5-b9cf-86b3efa5364c")#usage Data
+    if (categ.find('Licensing') != -1):
+        catego.append("00a42567-e21b-4526-945e-52f2c0ed7891") #Renewals
+    if (categ.find('Technical') != -1):
+        catego.append("c885c407-f78d-4293-94ba-954ad3fc2ca8") #Renewals
+    
+    
+    return catego
+#end
+
+
+def exitfile(arch):    
+    if os.path.isfile(arch):
+        print ("File exist")
+        os.remove(arch)
+    else:
+        print ("File not exist")
+
+
+def search(fileB,code_search):
+    idlicense=""
+    foundc=False
+    with open(fileB,'r',encoding = 'utf-8') as h:
+        for lineh in h:
+            if (lineh.find(code_search) != -1):
+                #print(lineh)
+                foundc=True
+                if (foundc):                    
+                    idlicense=lineh[8:44]
+                    break
+    if (foundc):
+        return idlicense
+    else:
+        idlicense="No Vendor"
+        return idlicense
+
+
+def make_get(pathPattern,okapi_url, okapi_tenant, okapi_token,json_file):
+    pathPattern=pathPattern
+    okapi_url=okapi_url
+    json_file=json_file
+    archivo=open(json_file+".json", 'w')
+    okapi_headers = {"x-okapi-token": okapi_token,"x-okapi-tenant": okapi_tenant,"content-type": "application/json"}
+    #username="folio"
+    #password="Madison"
+    #payload = {'username': username, 'password': password}
+    length="9999"
+    start="0"
+    paging_q = f"?limit={length}&offset={start}"
+    path = pathPattern+paging_q
+    #data=json.dumps(payload)
+    url = okapi_url + path
+    req = requests.get(url, headers=okapi_headers)
+    if req.status_code != 201:
+        print(req)
+        print()
+        print(req.encoding)
+        print(req.text)
+        print(req.headers)
+        json_str = json.loads(req.text)
+        #total_recs = int(json_str["totalRecords"])
+        archivo.write(json.dumps(json_str, indent=2))
+        print('Datos en formato JSON',json.dumps(json_str, indent=2))
+        archivo.close()
+
+
+def make_post(pathPattern,okapi_url, okapi_tenant, okapi_token,json_file):
+   
+    okapi_url=okapi_url
+    refdata={}
+    okapi_headers = {"x-okapi-token": okapi_token,"x-okapi-tenant": okapi_tenant,"content-type": "application/json"}
+    with open(json_file) as file:
+        data=json.load(file)
+        for refdatavalue in data:
+           
+            #refdata = json.load(linea)
+            #username="folio"
+            #password="Madison"
+            #payload = {'username': username, 'password': password}
+            length="9999"
+            start="0"
+            paging_q = f"?limit={length}&offset={start}"
+            path = pathPattern+paging_q
+            #data=json.dumps(payload)
+            url = okapi_url + pathPattern
+            print(f"POST {url}\n\n{json.dumps(refdatavalue, indent=4)}")
+            req = requests.post(url,data=json.dumps(refdatavalue), headers=okapi_headers)
+            if req.status_code != 201:
+                print(req.text)
+                json_str = json.loads(req.text)
+                #total_recs = int(json_str["totalRecords"])
+                archivo.write(json.dumps(json_str, indent=2))
+                print('Datos en formato JSON',json.dumps(json_str, indent=2))
+                archivo.close()
+
+def readOrderspreadsheet(spreadsheet, org):
+    wb = xlrd.open_workbook(spreadsheet)
+    fileN=org
+    worksheet = wb.sheet_by_name("orders")
+    print("no filas:", worksheet.nrows)
+    print("no filas:", worksheet.ncols)
+    
+    #read orders
+    oldorderNumber=0
+    for p in range(worksheet.nrows):
+        if (p!=0):
+            addnotas=[]
+            #Order Year
+            if (worksheet.cell_value(p,0)):
+                order_year=worksheet.cell_value(p,0)
+            #title- Order Name
+            if (worksheet.cell_value(p,1)):
+                title=worksheet.cell_value(p,1)
+            #Order number
+            if (worksheet.cell_value(p,2)):
+                orderNumber=worksheet.cell_value(p,2)
+            #Format
+            if (worksheet.cell_value(p,3)):
+                format=worksheet.cell_value(p,3)
+                if (format=="Online Only"):
+                    format="Electronic Resource"
+                elif(format=="Online + Print"):
+                    format="P/E Mix"
+                elif(format=="Other"):
+                    format="Other"
+            else:
+                format="Other"
+
+            #Vendor
+            if (worksheet.cell_value(p,4)):
+                print(worksheet.cell_value(p,4))
+                supplier=search("Macewan_organizations.json", worksheet.cell_value(p,4).strip())
+                if (supplier=="No Vendor"):
+                    supplier="0b3ffc1e-1fa5-4d40-8c93-e592aa94ab57"
+            else:
+              supplier="0b3ffc1e-1fa5-4d40-8c93-e592aa94ab57"
+
+            #Cost
+            if (worksheet.cell_value(p,5)):
+                amount=worksheet.cell_value(p,5)
+            else:
+                amount=0
+            #currency
+            if (worksheet.cell_value(p,6)):
+                currency=worksheet.cell_value(p,6)
+                if (currency=="Canadian Dollar"):
+                    currency="CAD"
+                elif (currency=="US Dollar"):
+                    currency="USD"
+                elif (currency=="British Pound"):
+                    currency="EUR"
+            else:
+                currency="USD"
+            
+            #finding source
+            if (worksheet.cell_value(p,7)):
+                finding=worksheet.cell_value(p,7)     
+            #Locations
+            if (worksheet.cell_value(p,8)):
+                locations=worksheet.cell_value(p,8)
+            #Sub-locations
+            if (worksheet.cell_value(p,9)):
+                sub_location=worksheet.cell_value(p,9)
+            #Consortium
+            if (worksheet.cell_value(p,10)):
+                consortium=worksheet.cell_value(p,10)
+            #Publisher
+            if (worksheet.cell_value(p,11)):
+                publisher=worksheet.cell_value(p,11)
+            else:
+                publisher=""
+            #fund Code
+            if (worksheet.cell_value(p,12)):
+                fundCode=worksheet.cell_value(p,12)
+                addnotas.append("Fund Code: "+fundCode)
+            #New/Renewals
+            if (worksheet.cell_value(p,13)):
+                rene=worksheet.cell_value(p,13)
+            #Sucription start Date
+            if (worksheet.cell_value(p,14)):
+                suscriptionStartDate=worksheet.cell_value(p,14)
+                ssd = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + int(suscriptionStartDate) - 2)
+                hour, minute, second = floatHourToTime(suscriptionStartDate % 1)
+                ssd = str(ssd.replace(hour=hour, minute=minute,second=second))+".000+0000" #Approbal by
+                ssd= ssd.replace(" ","T")
+            #Suscription End date
+            if (worksheet.cell_value(p,15)):
+                suscriptionEndDate=worksheet.cell_value(p,15)
+                sed = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + int(suscriptionEndDate) - 2)
+                hour, minute, second = floatHourToTime(suscriptionEndDate % 1)
+                sed = str(sed.replace(hour=hour, minute=minute,second=second))+".000+0000" #Approbal by
+                sed= sed.replace(" ","T")
+            #EBSCO order Yes/No
+            if (worksheet.cell_value(p,16)):
+                orderEbsco=worksheet.cell_value(p,16)
+            #status
+            if (worksheet.cell_value(p,17)):
+                statusOrder=worksheet.cell_value(p,17)
+            if (worksheet.cell_value(p,18)):
+                uuidpol=str(worksheet.cell_value(p,18)).strip()
+            mtypes="615b8413-82d5-4203-aa6e-e37984cb5ac3"
+        #purchase order creation 
+            if (orderNumber==oldorderNumber):
+                pollinenumber+=1
+                org.printPurchaseOrderOngoing(format,currency,sed,"purchase", amount, locations,title,ssd, sed, "True", publisher,fundCode,"Purchase at vendor system",ssd,mtypes,uuidpol,pollinenumber,fileN)
+            else:
+                pollinenumber=1
+                org=purchaseOrder(orderNumber,supplier,"Ongoing",addnotas,"Pending")
+                 #(self, Order_format, currency, renewalDate, purchase_method, eprice, id_loc, title, subscrition_from, subscription_to, package, publisher, fund, acq_method, expectedActivationDate,materialType,polId,fileName):
+                org.printPurchaseOrderOngoing(format,currency,sed,"Purchase", amount, locations, title, ssd, sed, "True", publisher, fundCode, "Purchase at vendor system", ssd, mtypes, uuidpol, pollinenumber, fileN)
+            oldorderNumber=orderNumber
+
+def readVendorspreadsheet(spreadsheet, org):
+    wb = xlrd.open_workbook(spreadsheet)
+    fileN=org
+    worksheet = wb.sheet_by_name("vendors")
+    print("no filas:", worksheet.nrows)
+    print("no filas:", worksheet.ncols)
+
+    #read contacts
+    for p in range(worksheet.nrows):
+        SalesContactName=""
+        SalesContactEmail=""
+        SystemsContactName=""
+        SystemsContactEmail=""
+        SystemsContactName=""
+        SystemsContactEmail=""
+        TechnicalContactName=""
+        TechnicalContactEmail=""
+        existSalesContactName=False
+        existexistsystemContactName=False
+        existTechnicalContactName=False
+        emailsales=[]
+        emailsystem=[]
+        emailtechnical=[]
+        organizationContact=[]
+        interfaceId=[]
+        if p!=0:
+        #CONTACTS            
+            #Sales Contacts
+            if (worksheet.cell_value(p,3)):
+                SalesContactName=str(worksheet.cell_value(p,3))
+                existSalesContactName=True
+            if (worksheet.cell_value(p,4)):
+                SalesContactEmail=worksheet.cell_value(p,4)
+            #if exist?
+            #contactfirstName, contactlastName, contactcategories, contactemails
+            if (existSalesContactName):
+                lastN=""
+                emailsales= [{"value": SalesContactEmail,"description": "Sales Contact","categories": cat("Sales")}]
+                org=contacts(SalesContactName,lastN, emailsales, cat("Sales"))
+                organizationContact.append(org.printcontacts(fileN))
+               
+            #System contacts
+            if (worksheet.cell_value(p,5)):
+                SystemsContactName=worksheet.cell_value(p,5)
+                existexistsystemContactName=True
+            if  (worksheet.cell_value(p,6)):
+                SystemsContactEmail=worksheet.cell_value(p,6)
+            #if exist?
+            if (existexistsystemContactName):
+                lastN=""
+                emailsystem=[{"value": SalesContactEmail,"description": "System Contact","categories": cat("Support"),"language": "en-us"}]
+                org=contacts(SystemsContactName,lastN, emailsystem, cat("Support"))
+                organizationContact.append(org.printcontacts(fileN))
+             
+            #technical contacts
+            if (worksheet.cell_value(p,7)):
+                TechnicalContactName=worksheet.cell_value(p,7)
+                existTechnicalContactName=True
+            if (worksheet.cell_value(p,8)):
+                TechnicalContactEmail=worksheet.cell_value(p,8)
+            #if exist?
+            if (existTechnicalContactName):
+                lastN=""
+                emailtechnical=[{"value": SalesContactEmail,"description": "Technical Contact","categories": cat("Technical"),"language": "en-us"}]
+                org=contacts(TechnicalContactName,lastN, emailtechnical, cat("Technical"))
+                organizationContact.append(org.printcontacts(fileN))
+       #INTERFACES
+            if (worksheet.cell_value(p,2)):
+                org=interfaces("Admin Site URL",worksheet.cell_value(p,2))
+                interfaceId.append(org.printinterfaces(fileN))
+        #ORGANIZATIONS
+        
+            if (worksheet.cell_value(p,0)):
+                org=Organizations(worksheet.cell_value(p,0),organizationContact,interfaceId)
+                org.printorganizations(fileN)
+
+#end
+
+if __name__ == "__main__":
+    """This is the Starting point for the script"""
+    customerName="Macewan"
+    #exitfile(customerName+"_interfaces.json")
+    #exitfile(customerName+"_contacts.json")
+    #exitfile(customerName+"_organizations.json")
+    exitfile(customerName+"_orders.json")
+    #readVendorspreadsheet(customerName+".xlsx", str(customerName))
+    readOrderspreadsheet(customerName+".xlsx", str(customerName))
+    
+    a=1
+    if (a==0):
+        pathPattern="/organizations-storage/contacts"
+        okapi_url="https://okapi-macewan.folio.ebsco.com"                 
+        okapi_token="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI4MjEzODdhZS1hNzkxLTQ5NTgtYTg3ZS1jYTFmMDE2NzA2YmUiLCJpYXQiOjE1OTA3OTE5MzUsInRlbmFudCI6ImZzMDAwMDEwMzcifQ.Rg5-QbxGh-xcYa5WM8Gz5vfNHFraKsAWE_vhOOvvmuQ"
+        okapi_tenant="fs00001037"
+        json_file=customerName+"_contacts.json"
+        make_post(pathPattern,okapi_url, okapi_tenant, okapi_token,json_file)
+    #customerName="Liverpool"
+    #readspreadsheet(customerName+".xlsx", str(customerName))
+
