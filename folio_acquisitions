@@ -557,22 +557,13 @@ def readVendorspreadsheet(spreadsheet, org):
 
 if __name__ == "__main__":
     """This is the Starting point for the script"""
-    customerName="Macewan"
-    #exitfile(customerName+"_interfaces.json")
-    #exitfile(customerName+"_contacts.json")
-    #exitfile(customerName+"_organizations.json")
+    customerName="XXX"
+    exitfile(customerName+"_interfaces.json")
+    exitfile(customerName+"_contacts.json")
+    exitfile(customerName+"_organizations.json")
     exitfile(customerName+"_orders.json")
     #readVendorspreadsheet(customerName+".xlsx", str(customerName))
     readOrderspreadsheet(customerName+".xlsx", str(customerName))
     
-    a=1
-    if (a==0):
-        pathPattern="/organizations-storage/contacts"
-        okapi_url="https://okapi-macewan.folio.ebsco.com"                 
-        okapi_token="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI4MjEzODdhZS1hNzkxLTQ5NTgtYTg3ZS1jYTFmMDE2NzA2YmUiLCJpYXQiOjE1OTA3OTE5MzUsInRlbmFudCI6ImZzMDAwMDEwMzcifQ.Rg5-QbxGh-xcYa5WM8Gz5vfNHFraKsAWE_vhOOvvmuQ"
-        okapi_tenant="fs00001037"
-        json_file=customerName+"_contacts.json"
-        make_post(pathPattern,okapi_url, okapi_tenant, okapi_token,json_file)
-    #customerName="Liverpool"
-    #readspreadsheet(customerName+".xlsx", str(customerName))
+
 
